@@ -12,6 +12,7 @@ import { Button } from '@/src/components/ui/Button'
 
 const ALL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const TIME_SIGS = ['4/4', '3/4', '6/8', '12/8', '2/4']
+const PRESET_TAGS = ['Praise', 'Worship', 'Hope', 'Holy Communion', 'Prayer', 'Christmas', 'Easter', 'Offering', 'Reflection', 'Communion']
 
 export default function AddSongPage() {
   const { user, profile, loading } = useAuth()
@@ -27,8 +28,20 @@ export default function AddSongPage() {
   const [timeSig, setTimeSig] = useState('4/4')
   const [lyrics, setLyrics] = useState('')
   const [notes, setNotes] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [customTag, setCustomTag] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const toggleTag = (tag: string) => {
+    setTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])
+  }
+
+  const addCustomTag = () => {
+    const t = customTag.trim()
+    if (t && !tags.includes(t)) setTags((prev) => [...prev, t])
+    setCustomTag('')
+  }
 
   useEffect(() => {
     if (!loading && !user) router.push('/login')
@@ -59,6 +72,7 @@ export default function AddSongPage() {
         original_key: selectedKey,
         time_sig: timeSig,
         notes: notes.trim() || null,
+        tags: tags.length > 0 ? tags : null,
       })
       .select()
       .single()
@@ -140,6 +154,47 @@ export default function AddSongPage() {
               {sig}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Tags */}
+      <div className="mb-4">
+        <label className="block text-sm text-gray-400 mb-2">Tags</label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {PRESET_TAGS.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => toggleTag(tag)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                tags.includes(tag)
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+        {tags.filter((t) => !PRESET_TAGS.includes(t)).map((t) => (
+          <span key={t} className="inline-flex items-center gap-1 bg-teal-600 text-white rounded-full px-3 py-1 text-xs font-semibold mr-2 mb-2">
+            {t}
+            <button onClick={() => toggleTag(t)} className="ml-1 hover:text-teal-200">✕</button>
+          </span>
+        ))}
+        <div className="flex gap-2 mt-1">
+          <input
+            value={customTag}
+            onChange={(e) => setCustomTag(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomTag() } }}
+            placeholder="Add custom tag..."
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500"
+          />
+          <button
+            onClick={addCustomTag}
+            className="bg-white/10 hover:bg-white/20 text-gray-300 rounded-xl px-3 py-2 text-sm transition-colors"
+          >
+            Add
+          </button>
         </div>
       </div>
 

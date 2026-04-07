@@ -111,6 +111,7 @@ export type Database = {
           original_key?: string | null
           bpm?: number | null
           time_sig?: string | null
+          tags?: string[] | null
           language?: string | null
           youtube_url?: string | null
           notes?: string | null
@@ -206,6 +207,7 @@ export type Database = {
         Update: {
           position?: number | null
           chosen_key?: string | null
+          notes?: string | null
         }
       }
       rehearsal_recordings: {

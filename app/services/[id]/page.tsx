@@ -25,6 +25,22 @@ export default function ServiceDetailPage() {
   const queryClient = useQueryClient()
 
   const [showAddSongModal, setShowAddSongModal] = useState(false)
+  const [editingTransition, setEditingTransition] = useState<string | null>(null)
+  const [transitionDraft, setTransitionDraft] = useState('')
+
+  const startEditTransition = (id: string, current: string | null) => {
+    setEditingTransition(id)
+    setTransitionDraft(current ?? '')
+  }
+
+  const saveTransition = async (serviceSongId: string) => {
+    await supabase
+      .from('service_songs')
+      .update({ notes: transitionDraft.trim() || null })
+      .eq('id', serviceSongId)
+    queryClient.invalidateQueries({ queryKey: ['setlist', id] })
+    setEditingTransition(null)
+  }
 
   useEffect(() => {
     if (!loading && !user) router.push('/login')
@@ -160,31 +176,58 @@ export default function ServiceDetailPage() {
       ) : (
         setlist.map((item, index) => {
           const song = item.songs as { title: string; artist: string | null } | null
+          const isLast = index === setlist.length - 1
           return (
-            <GlassCard key={item.id}>
-              <div className="flex items-center gap-3">
-                <span className="text-purple-400 text-xl font-bold w-8 flex-shrink-0">
-                  {index + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold truncate">{song?.title ?? 'Unknown'}</p>
-                  {song?.artist && (
-                    <p className="text-gray-400 text-sm truncate">{song.artist}</p>
+            <div key={item.id}>
+              <GlassCard>
+                <div className="flex items-center gap-3">
+                  <span className="text-purple-400 text-xl font-bold w-8 flex-shrink-0">
+                    {index + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold truncate">{song?.title ?? 'Unknown'}</p>
+                    {song?.artist && (
+                      <p className="text-gray-400 text-sm truncate">{song.artist}</p>
+                    )}
+                  </div>
+                  {item.chosen_key && (
+                    <span className="bg-purple-500/20 text-purple-300 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                      {item.chosen_key}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => removeSong(item.id)}
+                    className="text-red-400 hover:text-red-300 ml-2 w-8 h-8 flex items-center justify-center"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </GlassCard>
+
+              {!isLast && (
+                <div className="flex items-center gap-2 px-2 py-1 my-1">
+                  <div className="flex-shrink-0 text-gray-600 text-sm">↓</div>
+                  {editingTransition === item.id ? (
+                    <input
+                      autoFocus
+                      value={transitionDraft}
+                      onChange={(e) => setTransitionDraft(e.target.value)}
+                      onBlur={() => saveTransition(item.id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') saveTransition(item.id) }}
+                      placeholder="Transition idea..."
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white placeholder-gray-600 text-xs focus:outline-none focus:border-teal-500"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => startEditTransition(item.id, item.notes ?? null)}
+                      className="flex-1 text-left text-xs text-gray-600 hover:text-gray-400 italic transition-colors"
+                    >
+                      {item.notes ? item.notes : 'Add transition idea...'}
+                    </button>
                   )}
                 </div>
-                {item.chosen_key && (
-                  <span className="bg-purple-500/20 text-purple-300 text-xs px-2 py-1 rounded-full flex-shrink-0">
-                    {item.chosen_key}
-                  </span>
-                )}
-                <button
-                  onClick={() => removeSong(item.id)}
-                  className="text-red-400 hover:text-red-300 ml-2 w-8 h-8 flex items-center justify-center"
-                >
-                  ✕
-                </button>
-              </div>
-            </GlassCard>
+              )}
+            </div>
           )
         })
       )}

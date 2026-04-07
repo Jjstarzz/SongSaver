@@ -100,6 +100,11 @@ export default function SongDetailPage() {
             🌐 {song.language}
           </span>
         )}
+        {song.tags && (song.tags as string[]).map((tag) => (
+          <span key={tag} className="bg-teal-500/20 text-teal-300 text-xs px-3 py-1 rounded-full">
+            {tag}
+          </span>
+        ))}
       </div>
 
       {song.youtube_url && (
