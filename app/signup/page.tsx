@@ -14,7 +14,7 @@ export default function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [mode, setMode] = useState<'create' | 'join'>('create')
+  const [mode, setMode] = useState<'create' | 'join' | 'solo'>('solo')
   const [teamName, setTeamName] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
@@ -36,6 +36,7 @@ export default function SignupPage() {
     if (mode === 'create' && !teamName.trim()) { setError('Team name is required'); return }
     if (mode === 'join' && !inviteCode.trim()) { setError('Invite code is required'); return }
 
+
     setSubmitting(true)
 
     const { data, error: signUpError } = await signUp(email, password, name)
@@ -48,7 +49,24 @@ export default function SignupPage() {
 
     const userId = data.user.id
 
-    if (mode === 'create') {
+    if (mode === 'solo') {
+      const { data: team, error: teamError } = await supabase
+        .from('teams')
+        .insert({ name: `${name.trim()}'s Library` })
+        .select()
+        .single()
+
+      if (teamError || !team) {
+        setError('Failed to set up your account')
+        setSubmitting(false)
+        return
+      }
+
+      await supabase
+        .from('profiles')
+        .update({ team_id: team.id, role: 'worship_leader', name })
+        .eq('id', userId)
+    } else if (mode === 'create') {
       const { data: team, error: teamError } = await supabase
         .from('teams')
         .insert({ name: teamName })
@@ -120,8 +138,19 @@ export default function SignupPage() {
           />
 
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-2">Team</label>
-            <div className="flex gap-2">
+            <label className="block text-sm text-gray-400 mb-2">Team (optional)</label>
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setMode('solo')}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  mode === 'solo'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/10 text-gray-400'
+                }`}
+              >
+                Solo Use
+              </button>
               <button
                 type="button"
                 onClick={() => setMode('create')}
@@ -131,7 +160,7 @@ export default function SignupPage() {
                     : 'bg-white/10 text-gray-400'
                 }`}
               >
-                Create New Team
+                Create Team
               </button>
               <button
                 type="button"
@@ -142,19 +171,20 @@ export default function SignupPage() {
                     : 'bg-white/10 text-gray-400'
                 }`}
               >
-                Join Existing
+                Join Team
               </button>
             </div>
           </div>
 
-          {mode === 'create' ? (
+          {mode === 'create' && (
             <Input
               label="Church / Team Name"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               placeholder="Grace Community Church"
             />
-          ) : (
+          )}
+          {mode === 'join' && (
             <Input
               label="8-Character Invite Code"
               value={inviteCode}

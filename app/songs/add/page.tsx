@@ -53,7 +53,7 @@ export default function AddSongPage() {
       return
     }
     if (!profile?.team_id) {
-      setError('No team found. Please complete your profile.')
+      setError('Your account setup is incomplete. Please sign out and sign up again.')
       return
     }
 
