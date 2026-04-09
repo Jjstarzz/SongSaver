@@ -20,6 +20,8 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  const generateInviteCode = () => Math.random().toString(36).substring(2, 10).toUpperCase()
+
   useEffect(() => {
     if (!loading && user) {
       router.push('/')
@@ -52,7 +54,7 @@ export default function SignupPage() {
     if (mode === 'solo') {
       const { data: team, error: teamError } = await supabase
         .from('teams')
-        .insert({ name: `${name.trim()}'s Library` })
+        .insert({ name: `${name.trim()}'s Library`, invite_code: generateInviteCode() })
         .select()
         .single()
 
@@ -69,7 +71,7 @@ export default function SignupPage() {
     } else if (mode === 'create') {
       const { data: team, error: teamError } = await supabase
         .from('teams')
-        .insert({ name: teamName })
+        .insert({ name: teamName, invite_code: generateInviteCode() })
         .select()
         .single()
 
