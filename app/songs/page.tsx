@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/src/context/AuthContext'
@@ -12,13 +11,8 @@ import { Button } from '@/src/components/ui/Button'
 import { Input } from '@/src/components/ui/Input'
 
 export default function SongsPage() {
-  const { user, profile, loading } = useAuth()
-  const router = useRouter()
+  const { profile, loading } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')
-  }, [user, loading, router])
 
   const { data: songs, isLoading: songsLoading } = useQuery({
     queryKey: ['songs', profile?.team_id],
@@ -50,8 +44,6 @@ export default function SongsPage() {
       </div>
     )
   }
-  if (!user) return null
-
   return (
     <PageWrapper>
       <div className="flex items-center justify-between mb-6">

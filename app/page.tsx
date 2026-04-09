@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/src/context/AuthContext'
 import { supabase } from '@/src/lib/supabase'
@@ -10,14 +8,7 @@ import { GlassCard } from '@/src/components/ui/GlassCard'
 import { Button } from '@/src/components/ui/Button'
 
 export default function DashboardPage() {
-  const { user, profile, loading, signOut } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
-  }, [user, loading, router])
+  const { profile, loading, signOut } = useAuth()
 
   const teamId = profile?.team_id
 
@@ -62,8 +53,6 @@ export default function DashboardPage() {
       </div>
     )
   }
-
-  if (!user) return null
 
   const statusColors: Record<string, string> = {
     draft: 'text-amber-400 bg-amber-400/20 border-amber-400/30',

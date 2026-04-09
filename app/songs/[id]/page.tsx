@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useState } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/src/context/AuthContext'
@@ -13,17 +13,12 @@ import { KeySuggester } from '@/src/components/features/KeySuggester'
 import { transposeChords } from '@/src/utils/chordTransposer'
 
 export default function SongDetailPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { loading } = useAuth()
   const params = useParams()
   const id = params.id as string
 
   const [semitones, setSemitones] = useState(0)
   const [showChords, setShowChords] = useState(true)
-
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')
-  }, [user, loading, router])
 
   const { data: song, isLoading: songLoading } = useQuery({
     queryKey: ['song', id],
@@ -67,7 +62,7 @@ export default function SongDetailPage() {
       </div>
     )
   }
-  if (!user || !song) return null
+  if (!song) return null
 
   return (
     <PageWrapper>

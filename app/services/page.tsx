@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/src/context/AuthContext'
@@ -28,8 +27,7 @@ const statusColors: Record<string, string> = {
 }
 
 export default function ServicesPage() {
-  const { user, profile, loading } = useAuth()
-  const router = useRouter()
+  const { profile, loading } = useAuth()
   const queryClient = useQueryClient()
 
   const [showModal, setShowModal] = useState(false)
@@ -38,10 +36,6 @@ export default function ServicesPage() {
   const [theme, setTheme] = useState('')
   const [notes, setNotes] = useState('')
   const [creating, setCreating] = useState(false)
-
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')
-  }, [user, loading, router])
 
   const { data: services, isLoading: servicesLoading } = useQuery({
     queryKey: ['services', profile?.team_id],
@@ -94,8 +88,6 @@ export default function ServicesPage() {
       </div>
     )
   }
-  if (!user) return null
-
   return (
     <PageWrapper>
       <div className="flex items-center justify-between mb-6">

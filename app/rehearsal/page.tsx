@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/src/context/AuthContext'
 import { supabase } from '@/src/lib/supabase'
@@ -10,8 +9,7 @@ import { GlassCard } from '@/src/components/ui/GlassCard'
 import { MetronomeWidget } from '@/src/components/features/MetronomeWidget'
 
 export default function RehearsalPage() {
-  const { user, profile, loading } = useAuth()
-  const router = useRouter()
+  const { profile, loading } = useAuth()
   const queryClient = useQueryClient()
 
   const [isRecording, setIsRecording] = useState(false)
@@ -20,10 +18,6 @@ export default function RehearsalPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')
-  }, [user, loading, router])
 
   const { data: recordings } = useQuery({
     queryKey: ['recordings', profile?.team_id],
@@ -129,8 +123,6 @@ export default function RehearsalPage() {
       </div>
     )
   }
-  if (!user) return null
-
   return (
     <PageWrapper title="🎙️ Rehearsal">
       {/* Metronome */}

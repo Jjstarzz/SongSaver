@@ -39,6 +39,34 @@ const AuthContext = createContext<AuthContextType>({
   fetchProfile: async () => {},
 })
 
+const generateInviteCode = () => Math.random().toString(36).substring(2, 10).toUpperCase()
+
+async function ensureTeam(userId: string, profileData: Profile | null): Promise<Profile | null> {
+  if (profileData?.team_id) return profileData
+
+  // Auto-create a personal library for this user
+  const { data: team } = await supabase
+    .from('teams')
+    .insert({ name: 'My Library', invite_code: generateInviteCode() })
+    .select()
+    .single()
+
+  if (!team) return profileData
+
+  await supabase
+    .from('profiles')
+    .update({ team_id: team.id, role: 'worship_leader' })
+    .eq('id', userId)
+
+  const { data: updated } = await supabase
+    .from('profiles')
+    .select('*, teams(*)')
+    .eq('id', userId)
+    .single()
+
+  return updated as Profile | null
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -51,25 +79,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('id', userId)
       .single()
 
-    if (!error && data) {
-      setProfile(data as Profile)
-    }
+    const resolved = await ensureTeam(userId, error ? null : (data as Profile))
+    if (resolved) setProfile(resolved)
   }
 
   useEffect(() => {
-    const getSession = async () => {
+    const init = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
+
       if (session?.user) {
+        setUser(session.user)
         await fetchProfile(session.user.id)
+      } else {
+        // Auto sign-in anonymously so the app works without login
+        const { data } = await supabase.auth.signInAnonymously()
+        if (data.user) {
+          setUser(data.user)
+          await fetchProfile(data.user.id)
+        }
       }
+
       setLoading(false)
     }
 
-    getSession()
+    init()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (event === 'INITIAL_SESSION') return // handled above
         setUser(session?.user ?? null)
         if (session?.user) {
           await fetchProfile(session.user.id)
@@ -92,9 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { name },
-      },
+      options: { data: { name } },
     })
     return { data, error: error as Error | null }
   }
@@ -103,6 +138,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    // Re-sign in anonymously after sign out
+    const { data } = await supabase.auth.signInAnonymously()
+    if (data.user) {
+      setUser(data.user)
+      await fetchProfile(data.user.id)
+    }
   }
 
   return (

@@ -15,7 +15,7 @@ const TIME_SIGS = ['4/4', '3/4', '6/8', '12/8', '2/4']
 const PRESET_TAGS = ['Praise', 'Worship', 'Hope', 'Holy Communion', 'Prayer', 'Christmas', 'Easter', 'Offering', 'Reflection', 'Communion']
 
 export default function AddSongPage() {
-  const { user, profile, loading } = useAuth()
+  const { profile, loading } = useAuth()
   const router = useRouter()
   const queryClient = useQueryClient()
 
@@ -42,10 +42,6 @@ export default function AddSongPage() {
     if (t && !tags.includes(t)) setTags((prev) => [...prev, t])
     setCustomTag('')
   }
-
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')
-  }, [user, loading, router])
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -102,8 +98,6 @@ export default function AddSongPage() {
       </div>
     )
   }
-  if (!user) return null
-
   return (
     <PageWrapper>
       <Link href="/songs" className="text-purple-400 mb-4 block">
